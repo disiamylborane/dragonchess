@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <meta charset="UTF-8">
+    <style>
+        .chess-board { border-spacing: 0; border-collapse: collapse; }
+        .chess-board th { padding: .5em; }
+        .chess-board th + th { border-bottom: 1px solid #000; }
+        .chess-board th:first-child,
+        .chess-board td:last-child { border-right: 1px solid #000; }
+        .chess-board tr:last-child td { border-bottom: 1px solid; }
+        .chess-board th:empty { border: none; }
+        .chess-board td { width: 1.5em; height: 1.5em; text-align: center; font-size: 32px; line-height: 0;}
+        
+        .chess-board .airlight { background: #ccc; }
+        .chess-board .landlight { background: #dd9; }
+        .chess-board .underlight { background: #840; }
+
+        .chess-board .airdark { background: #7ad; }
+        .chess-board .landdark { background: #7a7; }
+        .chess-board .underdark { background: #aaa; }
+
+        .chess-board .selectformove { background: #000; }
+        input[type="button"] {
+            display: inline-block;
+            width: 20%;
+            background-color: #fff;
+            padding: 14px 28px;
+            font-size: 16px;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        img {max-height:100%; max-width:100%}
+    </style>
+</head>
+
+
+<body>
+        <div id="test" style="display: flex;flex-wrap: wrap; align-items: center; justify-content: center;"></div>
+
+        <div style="display: flex;flex-wrap: wrap;justify-content: center; align-items: center;">
+            <input id="small-think-button" type="button" value="Think 100 ms" style="display: block;"></input>
+            <input id="med-think-button" type="button" value="Think 1 s" style="display: block;"></input>
+            <input id="big-think-button" type="button" value="Think 10 s" style="display: block;"></input>
+            <input id="huge-think-button" type="button" value="Think 1 min" style="display: block;"></input>
+        </div>  
+</body>
+
+
+
+<script type="module">
+    import init, { start_board, get_possible_moves, get_possible_moves_from, fen_with_move, think } from './pkg/dragonchess_engine.js';
+    await init()
+
+    var fenboard = start_board()
+    var active_cell = null
+    var shown = []
+
+    function cell_notation(board, col, row) {
+        return (board+1).toString() + String.fromCharCode(97 + col) + (row+1).toString()
+    }
+
+    function mchar_to_imgname(mchar) {
+        const pieces = [
+            'basilisk', 'griffon', 'paladin', 'basilisk', 'griffon', 'paladin', 'cleric', 'hero', 
+            'sylph', 'cleric', 'hero', 'sylph', 'king', 'thief', 'king', 'thief', 'dwarf', 'mage', 
+            'unicorn', 'dwarf', 'mage', 'unicorn', 'elemental', 'oliphant', 'warrior', 'elemental', 'oliphant', 'warrior']
+        if (mchar == 'r'){
+            return 'dragon'
+        }
+        if ('lzjf'.includes(mchar)){
+            return 'hero'
+        }
+        else {
+            for(let i=0; i<pieces.length; i++) {
+                if (pieces[i][0] == mchar) {
+                    return pieces[i]
+                }
+            }
+        }
+        return null
+    }
+
+    function mchar_to_img(mchar) {
+        let iname = mchar_to_imgname(mchar.toLowerCase())
+        if (iname==null) {
+            return "";
+        }
+
+        let fname
+        if (mchar == mchar.toUpperCase()) {
+            fname = iname + ".svg.gold.png"
+        } else {
+            fname = iname + ".svg.scarlet.png"
+        }
+
+        return '<img src="pieces/' + fname + '" />'
+    }
+
+    function can_move_to(cell) {
+        let moves = get_possible_moves_from(fenboard, cell)
+        if (moves != null){
+            let moves_l = moves.split(' ')
+            return moves_l
+        }
+        return []
+    }
+
+    function unshow_moves() {
+        shown.forEach(c => {
+            let element = document.getElementById('cell-'+c)
+            if (element != null) {
+                element.style.backgroundColor = null;
+            }
+        });
+    }
+
+    function do_move(cell) {
+        if (active_cell != null) {
+            let new_fen = fen_with_move(fenboard, active_cell+cell)
+            if (new_fen != null) {
+                fenboard = new_fen
+                active_cell = null
+                shown = []
+                render(document.getElementById('test'), fenboard)
+            }
+
+        }
+    }
+
+
+    function show_moves(cell) {
+        if (shown.length > 0) {
+            if (shown.includes(cell)) {
+                do_move(cell)
+                return;
+            }
+        }
+
+        unshow_moves()
+
+        shown = can_move_to(cell)
+        if (shown.length>0) {
+            active_cell = cell;
+        } else {
+            active_cell = null;
+        }
+
+        shown.forEach(c => {
+            let element = document.getElementById('cell-'+c)
+            if (element != null) {
+                element.style.backgroundColor = 'yellow';
+            }
+        });
+    }
+
+    function render(element, fenlike) {
+        let html = ""
+
+        const styles = ["under", "land", "air"]
+
+        for(let brd=0; brd<3; brd++) {
+            html += '<div><table class="chess-board"><tbody>'
+            for(let row=7; row>=0; row--) {
+                html += '</tr>'
+                for(let col=0; col<12; col++) {
+                    let cell = brd*12*8 + row + col*8
+                    let mchar = fenlike[cell]
+
+                    let cls = styles[brd]+"dark"
+                    if ((col + row) % 2) {
+                        cls = styles[brd]+"light"
+                    }
+                    html += '<td id="cell-' + cell_notation(brd,col,row) + '" class="' + cls + '">' + mchar_to_img(mchar) + '</td>'
+                }
+                html += '</tr>'
+            }
+            html += '</tbody></table></div>'
+        }
+
+        element.innerHTML = html
+
+        for(let brd=0; brd<3; brd++) {
+        for(let row=7; row>=0; row--) {
+        for(let col=0; col<12; col++) {
+            let cn = cell_notation(brd,col,row)
+            document.getElementById("cell-" + cn).addEventListener("click", ()=>{show_moves(cn)});
+        }}}
+
+    }
+    function show_think(time) {
+        let i = think(fenboard, time)
+        if (i != null) {
+            active_cell = i.substring(1,4)
+            do_move(i.substring(4,7))
+        }
+    }
+
+    render(document.getElementById('test'), fenboard)
+    document.getElementById("small-think-button").addEventListener("click", ()=>{show_think(100)});
+    document.getElementById("med-think-button").addEventListener("click", ()=>{show_think(1000)});
+    document.getElementById("big-think-button").addEventListener("click", ()=>{show_think(10000)});
+    document.getElementById("huge-think-button").addEventListener("click", ()=>{show_think(60000)});
+
+</script>
+
+
+</html>
