@@ -38,38 +38,60 @@
 
 
 <body>
-        <div id="test" style="display: flex;flex-wrap: wrap; align-items: center; justify-content: center;"></div>
+        <div id="html-board" style="display: flex;flex-wrap: wrap; align-items: center; justify-content: center;"></div>
 
         <div style="display: flex;flex-wrap: wrap;justify-content: center; align-items: center;">
-            <input id="small-think-button" type="button" value="Think 100 ms" style="display: block;"></input>
-            <input id="med-think-button" type="button" value="Think 1 s" style="display: block;"></input>
-            <input id="big-think-button" type="button" value="Think 10 s" style="display: block;"></input>
-            <input id="huge-think-button" type="button" value="Think 1 min" style="display: block;"></input>
+            <input id="think-button" type="button" value="Think and move" style="display: block;"></input>
+            <input id="think-slider" type="range" min="100" max="100000" value="100" step="100" style="display: block;" oninput="document.getElementById('text-slider').innerHTML = this.value + ' ms'"></input>
+            <span id="text-slider">100 ms</span>
         </div>  
+        <div style="display: flex;flex-wrap: wrap;justify-content: center; align-items: center;">
+            <input id="score-button" type="button" value="Score position" style="display: block;"></input>
+            <input id="undo-button" type="button" value="Undo" style="display: block;"></input>
+            <script>document.getElementById("text-slider").innerHTML=document.getElementById('think-slider').value + ' ms'</script>
+        </div>  
+        <p id="thinking-results"></p>
 </body>
 
 
 
 <script type="module">
-    import init, { start_board, get_possible_moves, get_possible_moves_from, fen_with_move, think } from './pkg/dragonchess_engine.js';
+    import init, { start_board, get_possible_moves, get_possible_moves_from, fen_with_move, think, user_explain_score } from './pkg/dragonchess_engine.js';
     await init()
 
+    // A board representation. 288 chars for every square, like ".D....d..D....d.BD....db"
+    // Uppercase = Gold piece, see mchar_to_imgname function
+    // Lowercase = Scarlet piece
+    // '.' = empty square
+    // The 289th (fenboard[288]) symbol is either + (gold's turn) or - (scarlet's turn)
     var fenboard = start_board()
+
+    // An "undo buffer", a flattened array of previous (fenboard)s
+    var history = ''
+
+    // The square selected by user
     var active_cell = null
+
+    // The highlited squares (where the user can now move to)
     var shown = []
 
+    // Convert board-col-row index of to the 3-character human-readable form
     function cell_notation(board, col, row) {
         return (board+1).toString() + String.fromCharCode(97 + col) + (row+1).toString()
     }
 
+    // Convert a symbol representing a piece to a piece name (or null)
     function mchar_to_imgname(mchar) {
+        // Most of the pieces are represented by their first letter
         const pieces = [
             'basilisk', 'griffon', 'paladin', 'basilisk', 'griffon', 'paladin', 'cleric', 'hero', 
             'sylph', 'cleric', 'hero', 'sylph', 'king', 'thief', 'king', 'thief', 'dwarf', 'mage', 
             'unicorn', 'dwarf', 'mage', 'unicorn', 'elemental', 'oliphant', 'warrior', 'elemental', 'oliphant', 'warrior']
+        // Dragon is represented by 'r'
         if (mchar == 'r'){
             return 'dragon'
         }
+        // l, z, j, f are the forms of 'hero'
         if ('lzjf'.includes(mchar)){
             return 'hero'
         }
@@ -83,6 +105,7 @@
         return null
     }
 
+    // Convert a symbol representing a piece to an <img> object with the piece (or null)
     function mchar_to_img(mchar) {
         let iname = mchar_to_imgname(mchar.toLowerCase())
         if (iname==null) {
@@ -99,6 +122,7 @@
         return '<img src="pieces/' + fname + '" />'
     }
 
+    // Get an array of squares the piece from the chosen square can move to
     function can_move_to(cell) {
         let moves = get_possible_moves_from(fenboard, cell)
         if (moves != null){
@@ -108,6 +132,7 @@
         return []
     }
 
+    // Unhighlight highlighted cells
     function unshow_moves() {
         shown.forEach(c => {
             let element = document.getElementById('cell-'+c)
@@ -117,21 +142,24 @@
         });
     }
 
+    // Move from active_cell (global) to a given cell
     function do_move(cell) {
         if (active_cell != null) {
             let new_fen = fen_with_move(fenboard, active_cell+cell)
             if (new_fen != null) {
+                history += fenboard + ','
                 fenboard = new_fen
                 active_cell = null
                 shown = []
-                render(document.getElementById('test'), fenboard)
+                render(document.getElementById('html-board'), fenboard)
             }
 
         }
     }
 
-
-    function show_moves(cell) {
+    // Display the possible moves, if there's no active_cell
+    // Make a move, if the highlighted cell is clicked
+    function cell_clicked(cell) {
         if (shown.length > 0) {
             if (shown.includes(cell)) {
                 do_move(cell)
@@ -156,6 +184,7 @@
         });
     }
 
+    // Construct an html board representation in a div
     function render(element, fenlike) {
         let html = ""
 
@@ -186,23 +215,44 @@
         for(let row=7; row>=0; row--) {
         for(let col=0; col<12; col++) {
             let cn = cell_notation(brd,col,row)
-            document.getElementById("cell-" + cn).addEventListener("click", ()=>{show_moves(cn)});
+            document.getElementById("cell-" + cn).addEventListener("click", ()=>{cell_clicked(cn)});
         }}}
 
     }
-    function show_think(time) {
-        let i = think(fenboard, time)
+
+    // Search for the good move, make it
+    function show_think() {
+        let time = parseInt(document.getElementById("think-slider").value,10)
+
+        let i = think(fenboard, time, history)
+
         if (i != null) {
             active_cell = i.substring(1,4)
             do_move(i.substring(4,7))
+            document.getElementById("thinking-results").innerHTML = 'Estimated moves: ' +  i + ' score points<p>Possible moves: ' + get_possible_moves(fenboard).split(' ').length;            
         }
     }
 
-    render(document.getElementById('test'), fenboard)
-    document.getElementById("small-think-button").addEventListener("click", ()=>{show_think(100)});
-    document.getElementById("med-think-button").addEventListener("click", ()=>{show_think(1000)});
-    document.getElementById("big-think-button").addEventListener("click", ()=>{show_think(10000)});
-    document.getElementById("huge-think-button").addEventListener("click", ()=>{show_think(60000)});
+    // Request an evaluation of current position, show it
+    function score_position() {
+        let text = user_explain_score(fenboard);
+        document.getElementById("thinking-results").innerHTML = text;
+    }
+
+    // Request an evaluation of current position, show it
+    function undo() {
+        if (history.length > 0) {
+            let dh = history.slice(history.length-290, history.length-1)
+            fenboard = dh
+            render(document.getElementById('html-board'), fenboard)
+            history = history.slice(0, history.length-290)
+        }
+    }
+
+    render(document.getElementById('html-board'), fenboard)
+    document.getElementById("think-button").addEventListener("click", ()=>{show_think()});
+    document.getElementById("score-button").addEventListener("click", ()=>{score_position()});
+    document.getElementById("undo-button").addEventListener("click", ()=>{undo()});
 
 </script>
 
