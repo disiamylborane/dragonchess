@@ -51,23 +51,23 @@ function addHeapObject(obj) {
 function debugString(val) {
     // primitive types
     const type = typeof val;
-    if (type == 'number' || type == 'boolean' || val == null) {
+    if (type === 'number' || type === 'boolean' || val === null) {
         return  `${val}`;
     }
-    if (type == 'string') {
+    if (type === 'string') {
         return `"${val}"`;
     }
-    if (type == 'symbol') {
+    if (type === 'symbol') {
         const description = val.description;
-        if (description == null) {
+        if (description === null) {
             return 'Symbol';
         } else {
             return `Symbol(${description})`;
         }
     }
-    if (type == 'function') {
+    if (type === 'function') {
         const name = val.name;
-        if (typeof name == 'string' && name.length > 0) {
+        if (typeof name === 'string' && name.length > 0) {
             return `Function(${name})`;
         } else {
             return 'Function';
@@ -95,7 +95,7 @@ function debugString(val) {
         // Failed to match the standard '[object ClassName]'
         return toString.call(val);
     }
-    if (className == 'Object') {
+    if (className === 'Object') {
         // we're a user defined class or Object
         // JSON.stringify avoids problems with cycles, and is generally much
         // easier than looping through ownProperties of `val`.
@@ -306,7 +306,7 @@ async function load(module, imports) {
                 return await WebAssembly.instantiateStreaming(module, imports);
 
             } catch (e) {
-                if (module.headers.get('Content-Type') != 'application/wasm') {
+                if (module.headers.get('Content-Type') !== 'application/wasm') {
                     console.warn("`WebAssembly.instantiateStreaming` failed because your server does not serve wasm with `application/wasm` MIME type. Falling back to `WebAssembly.instantiate` which is slower. Original error:\n", e);
 
                 } else {

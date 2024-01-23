@@ -1,0 +1,37 @@
+import { ApiPieces, Piece } from "./types"
+
+export const symbolToPiece = {
+    [ApiPieces.empty]: Piece.empty,
+
+    [ApiPieces.goldenDragon]: Piece.goldenDragon,
+    [ApiPieces.goldenGriffon]: Piece.goldenGriffon,
+    [ApiPieces.goldenSylph]: Piece.goldenSylph,
+    [ApiPieces.goldenWarrior]: Piece.goldenWarrior,
+    [ApiPieces.goldenOliphant]: Piece.goldenOliphant,
+    [ApiPieces.goldenUnicorn]: Piece.goldenUnicorn,
+    [ApiPieces.goldenHero]: Piece.goldenHero,
+    [ApiPieces.goldenThief]: Piece.goldenThief,
+    [ApiPieces.goldenCleric]: Piece.goldenCleric,
+    [ApiPieces.goldenMage]: Piece.goldenMage,
+    [ApiPieces.goldenKing]: Piece.goldenKing,
+    [ApiPieces.goldenPaladin]: Piece.goldenPaladin,
+    [ApiPieces.goldenDwarf]: Piece.goldenDwarf,
+    [ApiPieces.goldenBasilisk]: Piece.goldenBasilisk,
+    [ApiPieces.goldenElemental]: Piece.goldenElemental,
+
+    [ApiPieces.scarletDragon]: Piece.scarletDragon,
+    [ApiPieces.scarletGriffon]: Piece.scarletGriffon,
+    [ApiPieces.scarletSylph]: Piece.scarletSylph,
+    [ApiPieces.scarletWarrior]: Piece.scarletWarrior,
+    [ApiPieces.scarletOliphant]: Piece.scarletOliphant,
+    [ApiPieces.scarletUnicorn]: Piece.scarletUnicorn,
+    [ApiPieces.scarletHero]: Piece.scarletHero,
+    [ApiPieces.scarletThief]: Piece.scarletThief,
+    [ApiPieces.scarletCleric]: Piece.scarletCleric,
+    [ApiPieces.scarletMage]: Piece.scarletMage,
+    [ApiPieces.scarletKing]: Piece.scarletKing,
+    [ApiPieces.scarletPaladin]: Piece.scarletPaladin,
+    [ApiPieces.scarletDwarf]: Piece.scarletDwarf,
+    [ApiPieces.scarletBasilisk]: Piece.scarletBasilisk,
+    [ApiPieces.scarletElemental]: Piece.scarletElemental,
+}

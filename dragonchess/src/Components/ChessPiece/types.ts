@@ -1,5 +1,6 @@
 export enum ApiPieces {
     empty = '.',
+
     goldenDragon = 'R',
     goldenGriffon = 'G',
     goldenSylph = 'S',
@@ -33,8 +34,9 @@ export enum ApiPieces {
     scarletElemental = 'e',
 } 
 
-export enum Pieces {
+export enum Piece {
     empty = 'empty',
+    
     goldenDragon = 'goldenDragon',
     goldenGriffon = 'goldenGriffon',
     goldenSylph = 'goldenSylph',
@@ -67,22 +69,3 @@ export enum Pieces {
     scarletBasilisk = 'scarletBasilisk',
     scarletElemental = 'scarletElemental',
 } 
-
-export type CellState = 'default' | 'active' | 'underMove' | 'underAttack'
-export enum CellParameters {
-    desk = 'desk',
-    column = 'column',
-    row = 'row',
-    piece = 'piece',
-    isLightCell = 'isLightCell',
-    state = 'state',
-}
-
-export type Cell = {
-    [CellParameters.desk]: number,
-    [CellParameters.column]: number,
-    [CellParameters.row]: string
-    [CellParameters.piece]: Pieces
-    [CellParameters.isLightCell]: boolean
-    [CellParameters.state]: CellState
-}
